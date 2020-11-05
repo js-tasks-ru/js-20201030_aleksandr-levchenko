@@ -8,8 +8,5 @@ export function sortStrings(arr, param = 'asc') {
     const compare = (a, b) => {
         return a.localeCompare(b, "ru", {caseFirst: "upper"})
     }
-    const mySort = (arr) => {
-        return arr.slice().sort((a,b) => compare(a,b))
-    }
-    return param === "asc" ? mySort(arr) : mySort(arr).reverse();
+    return arr.slice().sort((a,b) => param === "asc" ? compare(a,b) : compare(b,a));
 }
