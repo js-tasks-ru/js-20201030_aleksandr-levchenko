@@ -22,19 +22,6 @@ export default class ColumnChart {
         this.update(this.range.from, this.range.to);
     }
 
-    async getData(range) {
-
-        const {from, to} = range;
-
-        const url = new URL(`https://course-js.javascript.ru/${this.url}?from=${from}&to=${to}`);
-        await fetchJson(url).then(response => this.data = Object.values(response));
-    }
-
-    getValue(data) {
-        const value = data.reduce((accum, currentValue) => accum + currentValue);
-        return this.label === 'sales' ? '$'+ value : value;
-    }
-
     getColumnBody(data) {
         const maxValue = Math.max(...data);
         const scale = this.chartHeight / maxValue;
@@ -76,17 +63,11 @@ export default class ColumnChart {
         `;
     }
 
-    render(data = []) {
+    render() {
 
         const element = document.createElement("div");
-
         element.innerHTML = this.template;
-
         this.element = element.firstElementChild;
-
-        if (data.length) {
-            this.element.classList.remove("column-chart_loading");
-        }
 
         this.subElements = this.getSubElements(this.element);
     }
@@ -103,15 +84,38 @@ export default class ColumnChart {
 
     async update(from = new Date(), to = new Date()) {
         if (this.element) this.element.classList.add('column-chart_loading');
+        this.clearHeaderBody();
 
-        await this.getData({from, to});
-        if (this.data.length) this.fillBodyData();
+        const url = this.getUrl({from, to});
+        const data = await fetchJson(url);
 
+        if (data && Object.values(data).length)
+            this.fillBodyData(Object.values(data));
     }
 
-    fillBodyData() {
-        this.subElements.header.innerHTML = this.getValue(this.data);
-        this.subElements.body.innerHTML = this.getColumnBody(this.data);
+    getUrl(range) {
+        const {from, to} = range;
+
+        const url = new URL(`https://course-js.javascript.ru/${this.url}`);
+        url.searchParams.set('from', from);
+        url.searchParams.set('to', to);
+
+        return url;
+    }
+
+    clearHeaderBody() {
+        this.subElements.header.textContent = '';
+        this.subElements.body.innerHTML = '';
+    }
+
+    getValue(data) {
+        const value = data.reduce((accum, currentValue) => accum + currentValue);
+        return this.label === 'sales' ? '$'+ value : value;
+    }
+
+    fillBodyData(data) {
+        this.subElements.header.textContent  = this.getValue(data);
+        this.subElements.body.innerHTML = this.getColumnBody(data);
 
         this.element.classList.remove('column-chart_loading');
     }
